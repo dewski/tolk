@@ -1,5 +1,8 @@
 module Tolk
   class Locale < ActiveRecord::Base
+    include Tolk::Sync
+    include Tolk::Import
+    
     MAPPING = {
       'ar'    => 'Arabic',
       'bs'    => 'Bosnian',
@@ -60,11 +63,7 @@ module Tolk
     cattr_accessor :primary_locale_name
     self.primary_locale_name = I18n.default_locale.to_s
 
-    include Tolk::Sync
-    include Tolk::Import
-
-    validates_uniqueness_of :name
-    validates_presence_of :name
+    validates :name, :uniqueness => true, :presence => true
 
     cattr_accessor :special_prefixes
     self.special_prefixes = ['activerecord.attributes']
@@ -122,18 +121,17 @@ module Tolk
     end
 
     def count_phrases_without_translation
-      existing_ids = self.translations.all(:select => 'tolk_translations.phrase_id').map(&:phrase_id).uniq
+      existing_ids = translations.select('tolk_translations.phrase_id').collect(&:phrase_id).uniq
       Tolk::Phrase.count - existing_ids.count
     end
 
     def phrases_without_translation(page = nil, options = {})
-      phrases = Tolk::Phrase.scoped(:order => 'tolk_phrases.key ASC')
+      phrases = Tolk::Phrase.order('tolk_phrases.key ASC')
 
-      existing_ids = self.translations.all(:select => 'tolk_translations.phrase_id').map(&:phrase_id).uniq
-      phrases = phrases.scoped(:conditions => ['tolk_phrases.id NOT IN (?)', existing_ids]) if existing_ids.present?
+      existing_ids = translations.select('tolk_translations.phrase_id').collect(&:phrase_id).uniq
+      phrases = phrases.where('tolk_phrases.id NOT IN (?)', existing_ids) if existing_ids.present?
 
-      result = phrases.paginate({:page => page}.merge(options))
-      result
+      phrases.paginate({ :page => page }.merge(options))
     end
 
     def search_phrases(query, scope, page = nil, options = {})
@@ -143,25 +141,24 @@ module Tolk
       when :origin
         Tolk::Locale.primary_locale.translations.containing_text(query)
       else # :target
-        self.translations.containing_text(query)
+        translations.containing_text(query)
       end
 
-      phrases = Tolk::Phrase.scoped(:order => 'tolk_phrases.key ASC')      
-      phrases = phrases.scoped(:conditions => ['tolk_phrases.id IN(?)', translations.map(&:phrase_id).uniq])
-      phrases.paginate({:page => page}.merge(options))
+      phrases = Tolk::Phrase.order('tolk_phrases.key ASC')      
+      phrases = phrases.where('tolk_phrases.id IN(?)', translations.collect(&:phrase_id).uniq)
+      phrases.paginate({ :page => page }.merge(options))
     end
     
     def search_phrases_without_translation(query, page = nil, options = {})
       return phrases_without_translation(page, options) unless query.present?
       
-      phrases = Tolk::Phrase.scoped(:order => 'tolk_phrases.key ASC')
+      phrases = Tolk::Phrase.order('tolk_phrases.key ASC')
 
-      found_translations_ids = Tolk::Locale.primary_locale.translations.all(:conditions => ["tolk_translations.text LIKE ?", "%#{query}%"], :select => 'tolk_translations.phrase_id').map(&:phrase_id).uniq
-      existing_ids = self.translations.all(:select => 'tolk_translations.phrase_id').map(&:phrase_id).uniq
-      phrases = phrases.scoped(:conditions => ['tolk_phrases.id NOT IN (?) AND tolk_phrases.id IN(?)', existing_ids, found_translations_ids]) if existing_ids.present?
+      found_translations_ids = Tolk::Locale.primary_locale.translations.select('tolk_translations.phrase_id').where("tolk_translations.text LIKE ?", "%#{query}%").collect(&:phrase_id).uniq
+      existing_ids = translations.select('tolk_translations.phrase_id').collect(&:phrase_id).uniq
+      phrases = phrases.where('tolk_phrases.id NOT IN (?) AND tolk_phrases.id IN(?)', existing_ids, found_translations_ids) if existing_ids.present?
 
-      result = phrases.paginate({:page => page}.merge(options))
-      result
+      phrases.paginate({ :page => page }.merge(options))
     end
 
     def to_hash
@@ -194,9 +191,8 @@ module Tolk
     end
 
     def translations_with_html
-      translations = self.translations.all(:conditions => "tolk_translations.text LIKE '%>%' AND 
-        tolk_translations.text LIKE '%<%' AND tolk_phrases.key NOT LIKE '%_html'", :joins => :phrase)
-      translations
+      translations.where("tolk_translations.text LIKE '%>%' AND 
+        tolk_translations.text LIKE '%<%' AND tolk_phrases.key NOT LIKE '%_html'").joins(:phrase)
     end
 
     private
