@@ -1,5 +1,5 @@
 module Tolk
-  class LocalesController < Tolk::ApplicationController
+  class LocalesController < ApplicationController
     before_filter :find_locale, :only => [:show, :all, :update, :updated]
     before_filter :ensure_no_primary_locale, :only => [:all, :update, :show, :updated]
 

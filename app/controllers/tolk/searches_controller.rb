@@ -1,5 +1,5 @@
 module Tolk
-  class SearchesController < Tolk::ApplicationController
+  class SearchesController < ApplicationController
     before_filter :find_locale
   
     def show
