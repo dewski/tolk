@@ -7,11 +7,15 @@ Tolk is a Rails 3 engine designed to facilitate the translators doing the dirty 
 
 To install add the following to your Gemfile:
 
-   gem 'tolk'
+```
+gem 'tolk'
+```
 
 To setup just run:
 
-   $ rake tolk:setup
+```
+rake tolk:setup
+```
 
 ## Usage
 
@@ -19,23 +23,31 @@ Tolk treats I18n.default_locale as the master source of strings to be translated
 
 As tolk stores all the keys and translated strings in the database, you need to ask Tolk to update it's database from the primary yml file :
 
-   $ rake tolk:sync
+```
+rake tolk:sync
+```
   
 The above will fetch all the new keys from en.yml and put them in the database. Additionally, it'll also get rid of the deleted keys from the database and reflect updated translations - if any.
 
 If you already have data in your non primary locale files, you will need to import those to Tolk as a one time thing :
 
-   $ rake tolk:import
+```
+rake tolk:import
+```
 
-Upon visiting http://your_app.com/tolk - you will be presented with different options like creating new locale or providing translations for the existing locales. Once done with translating all the pending strings, you are can write back the new locales to filesystem :
+Upon visiting http://localhost:3000/tolk - you will be presented with different options like creating new locale or providing translations for the existing locales. Once done with translating all the pending strings, you are can write back the new locales to filesystem :
 
-   $ rake tolk:dump_all
+```
+rake tolk:dump_all
+```
 
 This will generate yml files for all non primary locales and put them in #{Rails.root}/config/locales/ directory by default.
 
 You can use the dump_all method defined in Tolk::Locale directly and pass directory path as the argument if you want the generated files to be at a different location :
 
-   $ script/runner "Tolk::Locale.dump_all('/Users/lifo')"
+```
+script/runner "Tolk::Locale.dump_all('/Users/lifo')"
+```
 
 You can even download the yml file using Tolk web interface by appending '.yml' to the locale url. E.g http://your_app.com/tolk/locales/de.yml
 
