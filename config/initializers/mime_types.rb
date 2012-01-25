@@ -1,1 +1,1 @@
-Mime::Type.register_alias "text/yaml", :yml
+Mime::Type.register_alias 'text/yaml', :yml
