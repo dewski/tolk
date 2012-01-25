@@ -1,7 +1,5 @@
 module Tolk
   class Locale < ActiveRecord::Base
-    set_table_name "tolk_locales"
-
     MAPPING = {
       'ar'    => 'Arabic',
       'bs'    => 'Bosnian',
@@ -135,7 +133,6 @@ module Tolk
       phrases = phrases.scoped(:conditions => ['tolk_phrases.id NOT IN (?)', existing_ids]) if existing_ids.present?
 
       result = phrases.paginate({:page => page}.merge(options))
-      Tolk::Phrase.send :preload_associations, result, :translations
       result
     end
 
@@ -164,7 +161,6 @@ module Tolk
       phrases = phrases.scoped(:conditions => ['tolk_phrases.id NOT IN (?) AND tolk_phrases.id IN(?)', existing_ids, found_translations_ids]) if existing_ids.present?
 
       result = phrases.paginate({:page => page}.merge(options))
-      Tolk::Phrase.send :preload_associations, result, :translations
       result
     end
 
@@ -200,7 +196,6 @@ module Tolk
     def translations_with_html
       translations = self.translations.all(:conditions => "tolk_translations.text LIKE '%>%' AND 
         tolk_translations.text LIKE '%<%' AND tolk_phrases.key NOT LIKE '%_html'", :joins => :phrase)
-      Translation.send :preload_associations, translations, :phrase
       translations
     end
 
@@ -222,8 +217,6 @@ module Tolk
       result = Tolk::Phrase.paginate(:page => page,
         :conditions => { :'tolk_translations.locale_id' => self.id }.merge(conditions),
         :joins => :translations, :order => 'tolk_phrases.key ASC')
-
-      Tolk::Phrase.send :preload_associations, result, :translations
 
       result.each do |phrase|
         phrase.translation = phrase.translations.for(self)
