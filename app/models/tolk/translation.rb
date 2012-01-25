@@ -5,7 +5,7 @@ module Tolk
     serialize :text
     validates_presence_of :text, :if => proc {|r| r.primary.blank? && !r.explicit_nil }
     validate :check_matching_variables, :if => proc { |tr| tr.primary_translation.present? }
-
+    
     validates_uniqueness_of :phrase_id, :scope => :locale_id
 
     belongs_to :phrase, :class_name => 'Tolk::Phrase'
