@@ -3,7 +3,6 @@ namespace :tolk do
   task :setup => :environment do
     system('rake tolk:install:migrations')
     Rake::Task['db:migrate'].invoke
-    Rake::Task['tolk:sync'].invoke
     Rake::Task['tolk:import'].invoke
   end
   
