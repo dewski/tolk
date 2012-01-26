@@ -1,8 +1,5 @@
 module Tolk
-  class Locale < ActiveRecord::Base
-    include Tolk::Sync
-    include Tolk::Import
-    
+  class Locale < Base
     MAPPING = {
       'ar'    => 'Arabic',
       'bs'    => 'Bosnian',
@@ -51,186 +48,78 @@ module Tolk
       'zh-CN' => 'Chinese (Simplified)',
       'zh-TW' => 'Chinese (Traditional)'
     }
-
-    has_many :phrases, :through => :translations, :class_name => 'Tolk::Phrase'
-    has_many :translations, :class_name => 'Tolk::Translation', :dependent => :destroy
-    accepts_nested_attributes_for :translations, :reject_if => proc { |attributes| attributes['text'].blank? }
-    before_validation :remove_invalid_translations_from_target, :on => :update
-
-    cattr_accessor :locales_config_path
-    self.locales_config_path = "#{Rails.root}/config/locales"
-
-    cattr_accessor :primary_locale_name
-    self.primary_locale_name = I18n.default_locale.to_s
-
-    validates :name, :uniqueness => true, :presence => true
-
-    cattr_accessor :special_prefixes
-    self.special_prefixes = ['activerecord.attributes']
-
-    cattr_accessor :special_keys
-    self.special_keys = ['activerecord.models']
-
+    
     class << self
-      def primary_locale(reload = false)
-        @_primary_locale = nil if reload
-        @_primary_locale ||= begin
-          raise "Primary locale is not set. Please set Locale.primary_locale_name in your application's config file" unless self.primary_locale_name
-          find_or_create_by_name(self.primary_locale_name)
-        end
+      def available_locales
+        $redis.smembers(key('locales')).collect { |locale| self.new(locale) }
       end
-
+      
+      def primary_locale
+        find(primary_locale_name)
+      end
+      
       def primary_language_name
         primary_locale.language_name
       end
-
-      def secondary_locales
-        all - [primary_locale]
+      
+      def create!(locale)
+        raise 'MissingLocaleError' if locale.nil?
+        $redis.sadd(key('locales'), locale)
       end
-
-      def dump_all(to = self.locales_config_path)
-        secondary_locales.each do |locale|
-          File.open("#{to}/#{locale.name}.yml", "w+") do |file|
-            data = locale.to_hash
-            data.respond_to?(:ya2yaml) ? file.write(data.ya2yaml(:syck_compatible => true)) : YAML.dump(locale.to_hash, file)
-          end
-        end
+      
+      def find(name)
+        self.new(name) if has_locale?(name)
       end
-
-      def special_key_or_prefix?(prefix, key)
-        self.special_prefixes.include?(prefix) || self.special_keys.include?(key)
+      alias :find_by_name :find
+      
+      def find_by_name!(name)
+        locale = find_by_name(name)
+        raise 'MissingLocaleError' unless locale
+        
+        locale
       end
-
-      PLURALIZATION_KEYS = ['none', 'one', 'two', 'few', 'many', 'other']
-      def pluralization_data?(data)
-        keys = data.keys.map(&:to_s)
-        keys.all? {|k| PLURALIZATION_KEYS.include?(k) }
+      
+      protected
+      
+      def has_locale?(name)
+        $redis.sismember(key('locales'), name)
       end
-    end
-
-    def has_updated_translations?
-      translations.count(:conditions => {:'tolk_translations.primary_updated' => true}) > 0
-    end
-
-    def phrases_with_translation(page = nil)
-      find_phrases_with_translations(page, :'tolk_translations.primary_updated' => false)
-    end
-
-    def phrases_with_updated_translation(page = nil)
-      find_phrases_with_translations(page, :'tolk_translations.primary_updated' => true)
-    end
-
-    def count_phrases_without_translation
-      existing_ids = translations.select('tolk_translations.phrase_id').collect(&:phrase_id).uniq
-      Tolk::Phrase.count - existing_ids.count
-    end
-
-    def phrases_without_translation(page = nil, options = {})
-      phrases = Tolk::Phrase.order('tolk_phrases.key ASC')
-
-      existing_ids = translations.select('tolk_translations.phrase_id').collect(&:phrase_id).uniq
-      phrases = phrases.where('tolk_phrases.id NOT IN (?)', existing_ids) if existing_ids.present?
-
-      phrases.paginate({ :page => page }.merge(options))
-    end
-
-    def search_phrases(query, scope, page = nil, options = {})
-      return [] unless query.present?
-
-      translations = case scope
-      when :origin
-        Tolk::Locale.primary_locale.translations.containing_text(query)
-      else # :target
-        translations.containing_text(query)
-      end
-
-      phrases = Tolk::Phrase.order('tolk_phrases.key ASC')      
-      phrases = phrases.where('tolk_phrases.id IN(?)', translations.collect(&:phrase_id).uniq)
-      phrases.paginate({ :page => page }.merge(options))
     end
     
-    def search_phrases_without_translation(query, page = nil, options = {})
-      return phrases_without_translation(page, options) unless query.present?
-      
-      phrases = Tolk::Phrase.order('tolk_phrases.key ASC')
-
-      found_translations_ids = Tolk::Locale.primary_locale.translations.select('tolk_translations.phrase_id').where("tolk_translations.text LIKE ?", "%#{query}%").collect(&:phrase_id).uniq
-      existing_ids = translations.select('tolk_translations.phrase_id').collect(&:phrase_id).uniq
-      phrases = phrases.where('tolk_phrases.id NOT IN (?) AND tolk_phrases.id IN(?)', existing_ids, found_translations_ids) if existing_ids.present?
-
-      phrases.paginate({ :page => page }.merge(options))
+    attr_accessor :name
+    attr_accessor :language_name
+    
+    def initialize(name)
+      @name = name
+      @language_name = MAPPING[name]
     end
-
-    def to_hash
-      { name => translations.each_with_object({}) do |translation, locale|
-        if translation.phrase.key.include?(".")
-          locale.deep_merge!(unsquish(translation.phrase.key, translation.value))
-        else
-          locale[translation.phrase.key] = translation.value
-        end
-      end }
+    
+    # @return boolean
+    def save
+      $redis.sadd(key('locales'), name)
     end
-
-    def to_param
-      name.parameterize
-    end
-
+    
+    # @return boolean
     def primary?
       name == self.class.primary_locale_name
     end
-
-    def language_name
-      MAPPING[self.name] || self.name
+    
+    def phrases(start=0, stop=-1)
+      set = key('locales', name)
+      
+      $redis.lrange(set, start, stop).collect { |phrase| Tolk::Phrase.lookup(set, phrase) }
     end
-
-    def [](key)
-      if phrase = Tolk::Phrase.find_by_key(key)
-        t = self.translations.find_by_phrase_id(phrase.id)
-        t.text if t
-      end
+    
+    def phrases_without_translation
+      Tolk::Phrase.missing_for_locale(name)
     end
-
-    def translations_with_html
-      translations.where("tolk_translations.text LIKE '%>%' AND 
-        tolk_translations.text LIKE '%<%' AND tolk_phrases.key NOT LIKE '%_html'").joins(:phrase)
+    
+    def count_phrases_without_translation
+      phrases_without_translation.length
     end
-
-    private
-
-    def remove_invalid_translations_from_target
-      self.translations.proxy_target.each do |t|
-        unless t.valid?
-          self.translations.proxy_target.delete(t)
-        else
-          t.updated_at = Time.current # Silly hax to fool autosave into saving the record
-        end
-      end
-
-      true
-    end
-
-    def find_phrases_with_translations(page, conditions = {})
-      result = Tolk::Phrase.paginate(:page => page,
-        :conditions => { :'tolk_translations.locale_id' => self.id }.merge(conditions),
-        :joins => :translations, :order => 'tolk_phrases.key ASC')
-
-      result.each do |phrase|
-        phrase.translation = phrase.translations.for(self)
-      end
-
-      result
-    end
-
-    def unsquish(string, value)
-      if string.is_a?(String)
-        unsquish(string.split("."), value)
-      elsif string.size == 1
-        { string.first => value }
-      else
-        key  = string[0]
-        rest = string[1..-1]
-        { key => unsquish(rest, value) }
-      end
+    
+    def to_param
+      name
     end
   end
 end

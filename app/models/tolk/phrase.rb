@@ -1,20 +1,26 @@
 module Tolk
-  class Phrase < ActiveRecord::Base
-    validates :key, :uniqueness => true
-
-    cattr_accessor :per_page
-    self.per_page = 30
-
-    has_many :translations, :class_name => 'Tolk::Translation', :dependent => :destroy do
-      def primary
-        to_a.detect { |t| t.locale_id == Tolk::Locale.primary_locale.id }
+  class Phrase < Base
+    class << self
+      def lookup(set, phrase)
+        translation = $redis.hget("#{set}.map", phrase)
+        self.new(phrase, translation)
       end
-
-      def for(locale)
-        to_a.detect { |t| t.locale_id == locale.id }
+      
+      def all
+        $redis.smembers(key('phrases'))
+      end
+      
+      def missing_for_locale(locale)
+        all.delete_if { |phrase| !$redis.hget(key('locales', locale, 'map'), phrase).nil? }
       end
     end
-
-    attr_accessor :translation
+    
+    attr_accessor :phrase
+    attr_accessor :value
+    
+    def initialize(phrase, value)
+      @phrase = phrase
+      @value = value
+    end
   end
 end

@@ -9,8 +9,9 @@ Gem::Specification.new do |s|
   s.homepage = 'http://www.rubyonrails.org'
 
   s.platform = Gem::Platform::RUBY
-  s.add_dependency('will_paginate', '3.0.2')
-  s.add_dependency('ya2yaml', '~> 0.26')
+  s.add_dependency 'will_paginate', '3.0.2'
+  s.add_dependency 'ya2yaml', '~> 0.26'
+  s.add_dependency 'redis'
 
   s.files = Dir['README.md', 'CHANGELOG.md', 'MIT-LICENSE', '{lib,app,db,config}/**/*']
   s.has_rdoc = false
