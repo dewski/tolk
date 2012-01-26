@@ -1,19 +1,18 @@
 module Tolk
   class LocalesController < ApplicationController
     before_filter :find_locale, :only => [:show, :all, :update, :updated]
-    before_filter :ensure_no_primary_locale, :only => [:all, :update, :show, :updated]
     rescue_from ActiveRecord::RecordNotFound do
       redirect_to locales_path
     end
     
     def index
-      @locales = Tolk::Locale.secondary_locales
+      @locales = Tolk::Locale.available_locales
     end
   
     def show
       respond_to do |format|
         format.html do
-          @phrases = @locale.phrases_without_translation(params[:page])
+          @phrases = @locale.phrases.paginate(:page => params[:page])
         end
         format.atom { @phrases = @locale.phrases_without_translation(params[:page], :per_page => 50) }
         format.yaml { render :text => @locale.to_hash.ya2yaml(:syck_compatible => true) }

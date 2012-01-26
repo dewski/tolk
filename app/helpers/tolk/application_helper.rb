@@ -19,10 +19,10 @@ module Tolk
     end
 
     def tolk_locale_selection
-      existing_locale_names = Tolk::Locale.all.map(&:name)
+      existing_locale_names = Tolk::Locale.available_locales
 
       pairs = Tolk::Locale::MAPPING.to_a.map(&:reverse).sort_by(&:first)
-      pairs.reject {|pair| existing_locale_names.include?(pair.last) }
+      pairs.reject { |pair| existing_locale_names.include?(pair.last) }
     end
 
     def scope_selector_for(locale)

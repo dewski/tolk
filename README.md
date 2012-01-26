@@ -1,3 +1,11 @@
+WARNING!
+========
+
+This branch is under heavy development, adding some new features and refactoring some code.
+
+* Hopes of being able to support any database with an adapter rather than support just for ActiveRecord.
+* The ability to translate database records rather than just static text.
+
 Tolk
 ====
 

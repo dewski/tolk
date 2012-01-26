@@ -9,9 +9,5 @@ module Tolk
     def authenticate
       self.authenticator.bind(self).call if self.authenticator && self.authenticator.respond_to?(:call)
     end
-
-    def ensure_no_primary_locale
-      redirect_to tolk_locales_path if @locale.primary?
-    end
   end
 end
