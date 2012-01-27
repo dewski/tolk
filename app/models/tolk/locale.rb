@@ -51,38 +51,40 @@ module Tolk
     
     class << self
       def available_locales
-        $redis.smembers(key('locales')).collect { |locale| self.new(locale) }
+        $redis.smembers(Tolk.locales_key).collect { |locale| self.new(locale) }
       end
       
       def primary_locale
-        find(primary_locale_name)
+        find(Tolk.locale)
       end
       
       def primary_language_name
         primary_locale.language_name
       end
       
-      def create!(locale)
-        raise 'MissingLocaleError' if locale.nil?
-        $redis.sadd(key('locales'), locale)
+      def create!(name)
+        if locale = find(name)
+          locale
+        else
+          $redis.sadd(Tolk.locales_key, name)
+          self.new(name)
+        end
       end
       
       def find(name)
         self.new(name) if has_locale?(name)
       end
-      alias :find_by_name :find
       
-      def find_by_name!(name)
-        locale = find_by_name(name)
-        raise 'MissingLocaleError' unless locale
-        
+      def find!(name)
+        locale = find(name)
+        raise MissingLocaleError if locale.nil?
         locale
       end
       
-      protected
+      private
       
       def has_locale?(name)
-        $redis.sismember(key('locales'), name)
+        $redis.sismember(Tolk.locales_key, name)
       end
     end
     
@@ -96,26 +98,37 @@ module Tolk
     
     # @return boolean
     def save
-      $redis.sadd(key('locales'), name)
+      unless $redis.sismember(key('locales'))
+        $redis.sadd(key('locales'), name)
+      else
+        true
+      end
     end
     
     # @return boolean
     def primary?
-      name == self.class.primary_locale_name
+      name == Tolk.locale
     end
     
     def phrases(start=0, stop=-1)
-      set = key('locales', name)
-      
-      $redis.lrange(set, start, stop).collect { |phrase| Tolk::Phrase.lookup(set, phrase) }
+      set = Tolk.locale_key
+      $redis.lrange(set, start, stop).collect { |phrase| Tolk::Phrase.new(set, phrase) }
     end
     
-    def phrases_without_translation
+    def missing_phrases
       Tolk::Phrase.missing_for_locale(name)
     end
     
-    def count_phrases_without_translation
-      phrases_without_translation.length
+    def missing_keys
+      Tolk::Phrase.missing_keys(name)
+    end
+    
+    def missing_phrases_count
+      missing_keys.length
+    end
+    
+    def destroy
+      $redis.srem(Tolk.locales_key)
     end
     
     def to_param
