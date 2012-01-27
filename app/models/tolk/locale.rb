@@ -66,8 +66,7 @@ module Tolk
         if locale = find(name)
           locale
         else
-          $redis.sadd(Tolk.locales_key, name)
-          self.new(name)
+          self.new(name).save
         end
       end
       
@@ -98,8 +97,8 @@ module Tolk
     
     # @return boolean
     def save
-      unless $redis.sismember(key('locales'))
-        $redis.sadd(key('locales'), name)
+      unless $redis.sismember(Tolk.locales_key, name)
+        $redis.sadd(Tolk.locales_key, name)
       else
         true
       end
@@ -111,8 +110,7 @@ module Tolk
     end
     
     def phrases(start=0, stop=-1)
-      set = Tolk.locale_key
-      $redis.lrange(set, start, stop).collect { |phrase| Tolk::Phrase.new(set, phrase) }
+      $redis.zrevrange(Tolk.phrase_list_key, start, stop).collect { |phrase| Tolk::Phrase.new(phrase) }
     end
     
     def missing_phrases
@@ -123,12 +121,11 @@ module Tolk
       Tolk::Phrase.missing_keys(name)
     end
     
-    def missing_phrases_count
-      missing_keys.length
-    end
-    
     def destroy
-      $redis.srem(Tolk.locales_key)
+      $redis.zremrangebyrank(Tolk.phrase_miss_list_key(name)) # Remove ranked misses, if any
+      $redis.zremrangebyrank(Tolk.phrase_hit_list_key(name)) # Remove ranked hits, if any
+      $redis.zremrangebyrank(Tolk.phrase_list_key(name), 0, -1) # Remove phrases
+      $redis.srem(Tolk.locales_key, name) # Remove from locale set
     end
     
     def to_param

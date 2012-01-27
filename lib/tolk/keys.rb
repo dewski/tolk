@@ -34,6 +34,18 @@ module Tolk
       key('phrases', key || locale, 'map')
     end
     
+    def phrase_list_key(key=nil)
+      key('phrases', key || locale, 'listing')
+    end
+    
+    def phrase_miss_list_key(key=nil)
+      key('phrases', key || locale, 'listing', 'miss')
+    end
+    
+    def phrase_hit_list_key(key=nil)
+      key('phrases', key || locale, 'listing', 'hit')
+    end
+    
     def locales_key
       key('locales')
     end
@@ -44,14 +56,6 @@ module Tolk
     
     def lookup_value_key(lookup_key, key=nil)
       key('locales', key || locale, 'values', lookup_key)
-    end
-    
-    def value_miss_key(miss_key, key=nil)
-      key('locales', key || locale, 'miss_count', miss_key)
-    end
-    
-    def value_hit_key(hit_key, key=nil)
-      key('locales', key || locale, 'hit_count', hit_key)
     end
   end
 end

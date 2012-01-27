@@ -96,9 +96,10 @@ module Tolk
           if value.nil?
             list_key = Tolk.phrases_miss_key
             @store.sadd(list_key, key) unless @store.sismember(list_key, key)
-            @store.incr(Tolk.value_miss_key(key))
+            @store.zincrby(Tolk.phrase_miss_list_key, 1, key) if Tolk.hit_check?
           else
-            @store.incr(Tolk.value_hit_key(key))
+            @store.zincrby(Tolk.phrase_hit_list_key, 1, key)  if Tolk.hit_check?
+            @store.zincrby(Tolk.phrase_list_key, 1, key) if Tolk.hit_check?
           end
           
           value

@@ -67,8 +67,8 @@ module Tolk
         missing_keys(locale)
       end
       
-      def missing_keys(locale=nil)
-        ($redis.sdiff(Tolk.phrase_key, Tolk.phrases_key) + $redis.sdiff(Tolk.phrases_miss_key(locale), Tolk.phrases_key)).flatten.uniq
+      def missing_keys(locale=nil, start=0, stop=-1)
+        $redis.zrevrange(Tolk.phrase_miss_list_key, start, stop)
       end
     end
     
@@ -82,12 +82,12 @@ module Tolk
     
     # Public: Return the amount of times the current phrase has been attempted to be looked up
     def misses
-      ($redis.get(Tolk.value_miss_key(key)) || '0').to_i
+      $redis.zscore(Tolk.phrase_miss_list_key, key) || 0
     end
     
     # Public: Return the amount of times the current phrase has been attempted to be looked up
     def hits
-      ($redis.get(Tolk.value_hit_key(key)) || '0').to_i
+      $redis.zscore(Tolk.phrase_hit_list_key, key) || 0
     end
     
     # Public: Sets attributes
@@ -98,27 +98,28 @@ module Tolk
     
     # Public:
     def reset
-      $redis.set(Tolk.value_miss_key(key), 0)
-      $redis.set(Tolk.value_hit_key(key), 0)
+      $redis.zadd(Tolk.phrase_miss_list_key(key), 0, key)
+      $redis.zadd(Tolk.phrase_hit_list_key(key), 0, key)
     end
     
     # Public: Saves the key and value of the phrase into the data store
     def save
-      $redis.srem(Tolk.phrases_miss_key, @key)
-      $redis.set(Tolk.value_miss_key(key), 0)
+      $redis.zrem(Tolk.phrase_miss_list_key, key)
       
-      $redis.sadd(Tolk.phrase_key, @key) unless $redis.sismember(Tolk.phrase_key, @key)
+      $redis.sadd(Tolk.phrase_key, key) unless $redis.sismember(Tolk.phrase_key, key)
       
       # Critical Important
-      $redis.sadd(Tolk.phrases_key, @key) && $redis.hset(Tolk.phrase_lookup_key, @key, @value)
+      $redis.sadd(Tolk.phrases_key, key) && $redis.hset(Tolk.phrase_lookup_key, key, value) && $redis.zadd(Tolk.phrase_list_key, 0, key)
     end
     
     # Public: Destroys any associated keys, sets, or lists associated to the phrase
     def destroy
-      $redis.srem(Tolk.phrase_key, @key)
-      $redis.srem(Tolk.phrases_key, @key)
-      $redis.hdel(Tolk.phrase_lookup_key, @key)
-      $redis.del(Tolk.value_miss_key(key))
+      $redis.srem(Tolk.phrase_key, key)
+      $redis.srem(Tolk.phrases_key, key)
+      $redis.hdel(Tolk.phrase_lookup_key, key)
+      $redis.zrem(Tolk.phrase_list_key, key)
+      $redis.zrem(Tolk.phrase_miss_list_key, key)
+      $redis.zrem(Tolk.phrase_hit_list_key, key)
       $redis.del(Tolk.value_hit_key(key))
     end
     
