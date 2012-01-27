@@ -1,0 +1,27 @@
+<% if @phrases.any? %>
+  <table class="translations bordered-table zebra-striped">
+    <thead>
+      <tr>
+        <th class="header phrase" width="43%"><%= t 'Phrase' %></th>
+        <th class="header value" width="43%"><%= t 'Localization' %></th>
+        <th class="header misses" width="14%" align="center"><%= t 'Miss Count' %></th>
+      </tr>
+    </thead>
+    <tbody>
+      <%- @phrases.each do |phrase| %>
+        <tr>
+          <td class="key"><%= phrase.key %></td>
+          <td class="value">
+            <%= form_for :phrase, :url => locale_path(current_locale), :remote => true, :method => :put do |f| %>
+              <%= f.hidden_field :key, :value => phrase.key %>
+              <%= f.text_area :value, :class => 'span10', :rows => 1 %>
+            <%- end %>
+          </td>
+          <td class="misses" align="center"><%= phrase.misses %></td>
+        </tr>
+      <%- end %>
+    </tbody>
+  </table>
+<% else %>
+  <p><%= t 'No phrase misses yet.' %></p>
+<% end %>

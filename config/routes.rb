@@ -3,6 +3,7 @@ Tolk::Engine.routes.draw do
     member do
       get :all
       get :updated
+      get :missing
     end
   end
   
