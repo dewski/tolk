@@ -1,11 +1,15 @@
 <% if @phrases.any? %>
   <table class="translations bordered-table zebra-striped">
-    <tr>
-      <th class="header phrase"><%= t 'Phrase' %></th>
-      <th class="header value"><%= t 'Localization' %></th>
-      <th class="header hits"><%= t 'Hits' %></th>
-    </tr>
-    <%= render :partial => 'tolk/phrases/phrase', :collection => @phrases %>
+    <thead>
+      <tr>
+        <th class="header phrase"><%= t 'Phrase' %></th>
+        <th class="header value"><%= t 'Localization' %></th>
+        <th class="header hits"><%= t 'Hits' %></th>
+      </tr>
+    </thead>
+    <tbody>
+      <%= render :partial => 'tolk/phrases/phrase', :collection => @phrases %>
+    </tbody>
   </table>
 <% else %>
   <p><%= t 'No phrases yet.' %></p>

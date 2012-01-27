@@ -22,9 +22,12 @@ $(function() {
   });
   
   $('form[data-remote]').on('ajax:success', function(e) {
-    $(this).parents('tr').remove();
-    $('form[data-remote]:first textarea').focus();
+    $('textarea[disabled]', this).removeAttr('disabled').focus();
   }).on('ajax:error', function(e) {
     $('textarea[disabled]', this).removeAttr('disabled').focus();
+  });
+  
+  $('table.missing-translations form[data-remote]').on('ajax:success', function(e) {
+    $(this).parents('tr').remove();
   })
 });

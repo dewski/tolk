@@ -1,5 +1,10 @@
 <tr>
   <td class="key"><%= phrase.key %></td>
-  <td class="value"><%= phrase.value %></td>
+  <td class="value">
+    <%= form_for :phrase, :url => locale_path(current_locale), :remote => true, :method => :put do |f| %>
+      <%= f.hidden_field :key, :value => phrase.key %>
+      <%= f.text_area :value, :value => phrase.value, :class => 'span10', :rows => 1 %>
+    <%- end %>
+  </td>
   <td class="hits"><%= phrase.hits %></td>
 </tr>

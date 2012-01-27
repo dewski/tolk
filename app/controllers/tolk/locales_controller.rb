@@ -25,11 +25,6 @@ module Tolk
       @phrases = current_locale.missing_phrases
     end
 
-    def updated
-      @phrases = @locale.phrases_with_updated_translation(params[:page])
-      render :all
-    end
-
     def create
       Tolk::Locale.create!(params[:tolk_locale])
       redirect_to :action => :index
