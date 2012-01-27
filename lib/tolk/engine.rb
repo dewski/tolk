@@ -5,6 +5,7 @@ require 'will_paginate/array'
 require 'will_paginate/view_helpers/action_view'
 require 'redis'
 require 'jquery-rails'
+require 'to_lang'
 
 # Internal
 require 'tolk/base'
@@ -22,19 +23,21 @@ module Tolk
     engine_name :tolk
     
     initializer 'tolk.setup_redis' do
-      return unless $redis.nil?
-      
       # Baked in support for Heroku
-      if ENV.key?('REDISTOGO_URL')
+      $redis ||= if ENV.key?('REDISTOGO_URL')
         uri = URI.parse(ENV['REDISTOGO_URL'])
-        $redis = Redis.new(:host => uri.host, :port => uri.port, :password => uri.password)
+        Redis.new(:host => uri.host, :port => uri.port, :password => uri.password)
       else
-        $redis = Redis.new
+        Redis.new
       end
     end
     
     initializer 'tolk.i18n_lookup' do
       I18n.backend = I18n::Backend::Chain.new(Tolk::Backend::Redis.new($redis), I18n.backend)
+    end
+    
+    initializer 'tolk.google_translate' do
+      ToLang.start(Tolk.google_translate_key) if Tolk.google_translate?
     end
   end
 end

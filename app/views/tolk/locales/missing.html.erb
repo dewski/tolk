@@ -2,9 +2,10 @@
   <table class="translations bordered-table zebra-striped">
     <thead>
       <tr>
-        <th class="header phrase" width="43%"><%= t 'Phrase' %></th>
-        <th class="header value" width="43%"><%= t 'Localization' %></th>
+        <th class="header phrase" width="36%"><%= t 'Phrase' %></th>
+        <th class="header value" width="36%"><%= t 'Localization' %></th>
         <th class="header misses" width="14%" align="center"><%= t 'Miss Count' %></th>
+        <th class="header options" width="14%" align="center"><%= t 'Options' %></th>
       </tr>
     </thead>
     <tbody>
@@ -17,7 +18,12 @@
               <%= f.text_area :value, :class => 'span10', :rows => 1 %>
             <%- end %>
           </td>
-          <td class="misses" align="center"><%= phrase.misses %></td>
+          <td class="misses"><%= phrase.misses %></td>
+          <td class="options">
+            <%- if Tolk.google_translate? %>
+            <%= link_to 'Translate', translate_locale_phrases_path(current_locale, :id => phrase), :remote => true, :class => 'translate', :method => :post %>
+            <%- end %>
+          </td>
         </tr>
       <%- end %>
     </tbody>

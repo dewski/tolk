@@ -14,6 +14,7 @@ Gem::Specification.new do |s|
   s.add_dependency 'redis'
   s.add_dependency 'jquery-rails'
   s.add_dependency 'i18n'
+  s.add_dependency 'to_lang'
 
   s.files = Dir['README.md', 'CHANGELOG.md', 'MIT-LICENSE', '{lib,app,db,config}/**/*']
   s.has_rdoc = false

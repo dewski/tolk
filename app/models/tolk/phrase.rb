@@ -68,7 +68,7 @@ module Tolk
       end
       
       def missing_keys(locale=nil, start=0, stop=-1)
-        $redis.zrevrange(Tolk.phrase_miss_list_key, start, stop)
+        $redis.zrevrange(Tolk.phrase_miss_list_key(locale), start, stop)
       end
     end
     
@@ -90,6 +90,11 @@ module Tolk
       $redis.zscore(Tolk.phrase_hit_list_key, key) || 0
     end
     
+    def translate
+      self.value = key.translate(Tolk.locale, :from => Tolk.default_locale)
+      save
+    end
+    
     # Public: Sets attributes
     def update_attributes(attributes)
       attributes.each { |k, v| send(:"#{k}=", v) }
@@ -103,13 +108,30 @@ module Tolk
     end
     
     # Public: Saves the key and value of the phrase into the data store
+    # TODO: Check for new record before doing zadd
     def save
+      # Remove the miss list
       $redis.zrem(Tolk.phrase_miss_list_key, key)
       
+      # Add it to the global list of phrases unless it already exists
       $redis.sadd(Tolk.phrase_key, key) unless $redis.sismember(Tolk.phrase_key, key)
       
       # Critical Important
-      $redis.sadd(Tolk.phrases_key, key) && $redis.hset(Tolk.phrase_lookup_key, key, value) && $redis.zadd(Tolk.phrase_list_key, 0, key)
+      $redis.hset(Tolk.phrase_lookup_key, key, value) && $redis.zadd(Tolk.phrase_list_key, 0, key)
+    end
+    
+    # Public: Returns the key of the phrase
+    #
+    # Examples:
+    #
+    #   phrase.to_param
+    #   # => Hello, World!
+    #
+    #   phrase.to_param
+    #   # => page.about.title
+    #
+    def to_param
+      key
     end
     
     # Public: Destroys any associated keys, sets, or lists associated to the phrase
@@ -121,10 +143,6 @@ module Tolk
       $redis.zrem(Tolk.phrase_miss_list_key, key)
       $redis.zrem(Tolk.phrase_hit_list_key, key)
       $redis.del(Tolk.value_hit_key(key))
-    end
-    
-    def to_param
-      key
     end
   end
 end

@@ -15,6 +15,12 @@ $(function() {
     }
   });
   
+  $('a.translate').on('ajax:success', function(xhr, data, status) {
+    $(this).parents('tr').find('.value textarea').attr('value', data.text).focus();
+  }).on('ajax:error', function(xhr, status, error) {
+    alert("There was an error translating:\n\nCode: " + status.status + "\n\nMessage:\n"+ status.statusText);
+  });
+  
   $('form[data-remote]').on('ajax:success', function(e) {
     $(this).parents('tr').remove();
     $('form[data-remote]:first textarea').focus();

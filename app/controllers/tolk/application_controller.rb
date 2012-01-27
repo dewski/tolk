@@ -1,7 +1,7 @@
 module Tolk
   class ApplicationController < ActionController::Base
-    helper :all
     protect_from_forgery
+    helper :all
     rescue_from Tolk::LocaleNotFound do
       redirect_to locales_path
     end
@@ -26,7 +26,7 @@ module Tolk
     end
  
     def set_locale
-      I18n.locale = Tolk.locale = params[:id] || I18n.default_locale.to_s
+      I18n.locale = Tolk.locale = params[:locale_id] || params[:id] || I18n.default_locale.to_s
     end
   end
 end

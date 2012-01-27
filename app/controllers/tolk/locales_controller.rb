@@ -1,6 +1,5 @@
 module Tolk
   class LocalesController < ApplicationController
-    before_filter :find_locale, :only => [:show, :all, :update, :updated]
     respond_to :json, :only => :update
     
     def index
@@ -34,12 +33,6 @@ module Tolk
     def create
       Tolk::Locale.create!(params[:tolk_locale])
       redirect_to :action => :index
-    end
-
-    private
-
-    def find_locale
-      @locale = Tolk::Locale.find!(params[:id])
     end
   end
 end

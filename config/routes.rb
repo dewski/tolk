@@ -5,6 +5,12 @@ Tolk::Engine.routes.draw do
       get :updated
       get :missing
     end
+    
+    resources :phrases do
+      collection do
+        post :translate
+      end
+    end
   end
   
   resource :search
