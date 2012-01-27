@@ -17,7 +17,7 @@
               <a href="#" class="dropdown-toggle"><%= current_locale.language_name %></a>
               <ul class="dropdown-menu">
                 <%- Tolk::Locale.available_locales.each do |locale| %>
-                <li><%= link_to locale.language_name, locale_path(locale) %></li>
+                <li><%= link_to "#{locale.language_name} - #{locale.missing_keys.length}", locale_path(locale) %></li>
                 <%- end %>
               </ul>
             </li>
