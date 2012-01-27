@@ -6,9 +6,9 @@ module Tolk
     def index
       @phrases = current_locale.phrases
     end
-  
+    
     def show
-      @phrases = Tolk::Phrase.localized
+      @phrases = current_locale.phrases
       render :index
     end
 

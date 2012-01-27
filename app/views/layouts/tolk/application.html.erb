@@ -22,7 +22,7 @@
               </ul>
             </li>
             <li><%= link_to t('Completed'), locale_path(current_locale) %></li>
-            <li><%= link_to t('Missing (%{count})', :count => current_locale.missing_phrases_count), missing_locale_path(current_locale) %></li>
+            <li><%= link_to t('Missing (%{count})', :count => current_locale.missing_keys.length), missing_locale_path(current_locale) %></li>
           </ul>
           <form class="pull-left" action="">
             <input type="text" placeholder="<%= t 'Search Translations' %>">
