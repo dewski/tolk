@@ -1,32 +1,34 @@
-<% content_for :locale do %><span class="locale empty"></span>
-<% end %>
-
-<h2>Locales <span>Primary locale is <%= Tolk::Locale.primary_language_name %></span></h2>
-<% if @locales.any? %>
-  <ul class="locales clearfix">
-    <% @locales.each do |locale| %>
-      <li>
-        <%= link_to locale.language_name, locale_path(locale) %>
-        <% missing_count = locale.count_phrases_without_translation %>
-        <% if missing_count > 0 %>
-          <span class="missing_translations"><%= missing_count %></span>
-        <% end %>
-      </li>
-    <% end %>
-  </ul>
+<% if @phrases.any? %>
+  <table class="translations bordered-table zebra-striped">
+    <tr>
+      <th class="header phrase"><%= t 'Phrase' %></th>
+      <th class="header value"><%= t 'Localization' %></th>
+      <th class="header hits"><%= t 'Hits' %></th>
+    </tr>
+    <%= render :partial => 'tolk/phrases/phrase', :collection => @phrases %>
+  </table>
 <% else %>
-  <p>No locales yet.</p>
+  <p><%= t 'No phrases yet.' %></p>
 <% end %>
 
-<%= form_for(:locale) do |f| %>
-<div class="submit">
-  <p>
-    <%= f.label "Add a new Locale" %>
-    <select id="select_tolk_locale_name" name="tolk_locale">
-      <%= options_for_select tolk_locale_selection %>
-    </select>
-    <%= f.submit 'Add' %>
-  </p>
+<%= form_for :phrase, :remote => true, :html => { :class => 'form-stacked' } do |f| %>
+<fieldset>
+  <legend><%= t 'Add New Phrase' %></legend>
+  <div class="clearfix">
+    <%= f.label :key, 'Phrase' %>
+    <div class="input">
+      <%= f.text_area :key, :rows => 4, :class => 'span10' %>
+    </div>
+  </div><!-- /clearfix -->
+  <div class="clearfix">
+    <%= f.label :value, 'Localization' %>
+    <div class="input">
+      <%= f.text_area :value, :rows => 4, :class => 'span10' %>
+    </div>
+  </div><!-- /clearfix -->
+</fieldset>
+<div class="actions">
+  <button type="submit" class="btn primary"><%= t '+ Add Phrase' %></button>&nbsp;<button type="reset" class="btn"><%= t 'Reset' %></button>
 </div>
 <% end %>
 
