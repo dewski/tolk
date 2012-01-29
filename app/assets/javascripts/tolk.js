@@ -6,12 +6,16 @@
 $(function() {
   $("table").tablesorter({ sortList: [[1,0]] });
   
-  $('form[data-remote] textarea').on('keypress', function(e) {
-    if (e.charCode == 13 && !e.shiftKey) {
+  $('form[data-remote] textarea').on('keydown', function(e) {
+    if (e.keyCode == 13 && !e.shiftKey) {
       $(this).parents('form').submit();
       // Won't submit disabled data if called before submit
       $(this).attr('disabled', 'disabled');
       return false;
+    } else if (e.keyCode == 38) { // Up
+      $(this).parents('tr').prev().find('textarea').focus();
+    } else if (e.keyCode == 40) { // Down
+      $(this).parents('tr').next().find('textarea').focus();
     }
   });
   
