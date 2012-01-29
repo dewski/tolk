@@ -8,30 +8,24 @@
     <%= yield :head %>
   </head>
   <body>
-    <div class="topbar" data-dropdown="dropdown">
-      <div class="topbar-inner">
-        <div class="container">
-          <h3><%= link_to 'Tolk', tolk.root_path %></h3>
-          <ul class="nav">
-            <li class="dropdown">
-              <a href="#" class="dropdown-toggle"><%= current_locale.language_name %></a>
-              <ul class="dropdown-menu">
-                <%- Tolk::Locale.available_locales.each do |locale| %>
-                <li><%= link_to "#{locale.language_name} - #{locale.missing_keys.length}", locale_path(locale) %></li>
-                <%- end %>
-              </ul>
-            </li>
-            <li><%= link_to t('Completed'), locale_path(current_locale) %></li>
-            <li><%= link_to t('Missing (%{count})', :count => current_locale.missing_keys.length), missing_locale_path(current_locale) %></li>
-          </ul>
-          <form class="pull-left" action="">
-            <input type="text" placeholder="<%= t 'Search Translations' %>">
-          </form>
-        </div>
+    <header>
+      <h1><%= link_to 'Tolk', tolk.root_path %></h1>
+    </header>
+    <div id="main">
+      <div id="locales">
+        <ul>
+          <% Tolk::Locale.available_locales.each do |locale| -%>
+            <%= completed_percentage_link locale %>
+          <% end -%>
+          <li class="add"><%= link_to t('New Locale'), new_locale_path %></li>
+        </ul>
+      </div>
+      <div id="container">
+        <%= yield %>
       </div>
     </div>
-    <div class='container'>
-      <%= yield %>
-    </div>
+    <footer>
+      Tolk
+    </footer>
   </body>
 </html>

@@ -1,7 +1,55 @@
 @import 'bootstrap';
+@import 'tolk/variables';
+@import 'tolk/mixins';
 
-body {
-  padding-top: 75px;
+header {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: $headerHeight;
+}
+
+#locales {
+  position: fixed;
+  left: 0;
+  top: $headerHeight;
+  bottom: $footerHeight;
+  width: $localesWidth;
+  
+  ul {
+    margin: 0;
+  }
+  
+  li {
+    list-style: none;
+    
+    &.completed a {
+      @include linear-gradient(lighten(#9bc83f, 10%), #9bc83f)
+    }
+  }
+  
+  a {
+    background: #fefefe;
+    display: block;
+    border-bottom: 1px solid #eee;
+  }
+}
+
+#container {
+  position: fixed;
+  left: $localesWidth;
+  top: $headerHeight;
+  bottom: $footerHeight;
+  right: 0;
+}
+
+footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: $footerHeight;
 }
 
 td form {
