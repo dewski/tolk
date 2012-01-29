@@ -5,6 +5,9 @@ This branch is under heavy development, adding some new features and refactoring
 
 * Hopes of being able to support any database with an adapter rather than support just for ActiveRecord.
 * The ability to translate database records rather than just static text with class methods on models.
+* Track hits and misses, optional sample rates
+* Support for Redis & Heroku out of the box
+* If you have a Google Translate key, you can use that to ease the process of translating the site
 
 Tolk
 ====
@@ -17,6 +20,12 @@ To install add the following to your Gemfile:
 
 ```
 gem 'tolk'
+```
+
+To copy the initializer for configuration setup just run:
+
+```
+rails generate tolk:install
 ```
 
 To setup just run:
